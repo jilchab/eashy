@@ -1,0 +1,51 @@
+/*
+    This file is an example of eashy file:
+    a command line tool for managing shell commands.
+*/
+
+new_sh_file filename shebang="#!/bin/sh" {
+    "filename=${filename%.*}.sh"    // Make sure the name ends with .sh (Quotes for escaping '{' and '}' characters)
+    echo $shebang > $filename       // Create the file and write the shebang
+    chmod +x $filename              // Make the file executable
+}
+
+("Python venv management") \
+venv {
+    ("Create a new virtual environment")\
+    init {
+        python -m venv ".venv"
+        source ".venv/bin/activate"
+        echo "Activated virtual environment, version: $(python --version)"
+    }
+
+    ("Activate the virtual environment")\
+    activate {
+        source ".venv/bin/activate" && \
+        echo "Activated virtual environment, version: $(python --version)" || \
+        echo "Failed to activate virtual environment. Make sure .venv exists."
+    }
+
+    ("Deactivate the virtual environment")\
+    deactivate {
+        deactivate
+        echo "Deactivated virtual environment"
+    }
+    ("Delete the virtual environment") \
+    delete {
+        deactivate
+        rm -rf ".venv" && \
+        echo "Removed virtual environment"
+    }
+}
+
+&early_ret_on_error {
+    echo "This command has a & prefix"
+    "$(exit -1)"
+    echo "This command will not run if the previous command fails"
+}
+
+|early_ret_on_ok {
+    "$(exit -1)"
+    echo "This command has a | prefix"
+    echo "This command will not run if the previous command succeeds"
+}

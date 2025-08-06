@@ -1,1 +1,5 @@
 /target
+
+*.sh
+*.kdl
+!example.kdl

@@ -1,0 +1,17 @@
+[package]
+name = "eashy"
+version = "0.1.0"
+edition = "2021"
+description = "No more hassle writing shell functions! Easy subcommands and help documentation"
+license = "Apache-2.0"
+repository = "https://github.com/jilchab/eashy"
+homepage = "https://github.com/jilchab/eashy"
+documentation = "https://docs.rs/eashy"
+readme = "README.md"
+keywords = ["shell", "cli", "subcommands", "automation", "kdl"]
+categories = ["command-line-utilities", "development-tools"]
+authors = ["Jil Chabaro <jilchabaro@gmail.com>"]
+
+[dependencies]
+anyhow = "1.0"
+kdl = "6.3"
