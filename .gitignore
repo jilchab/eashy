@@ -1,5 +1,8 @@
 /target
 
 *.sh
+!install.sh
+!release.sh
+
 *.kdl
 !example.kdl
