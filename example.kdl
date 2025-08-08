@@ -9,6 +9,32 @@ new_sh_file filename shebang="#!/bin/sh" {
     chmod +x $filename              // Make the file executable
 }
 
+/*
+Sometimes it's easier to put everything in a escaped multi-line string (#""" """#)
+when you want to avoid escaping a lot of special characters (like [ ] = etc.)
+*/
+shell {
+    #"""
+    shell=$(basename $(ps -p $$ -o comm=))
+    if [ "$shell" = "bash" ]; then
+        echo "Classic bash shell"
+    elif [ "$shell" = "zsh" ]; then
+        echo "Zsh is your shell"
+    elif [ "$shell" = "sh" ] || [ "$shell" = "dash" ]; then
+        echo "Good 'ol sh"
+    elif [ "$shell" = "ksh" ]; then
+        echo "I see, ksh is your shell"
+    else
+        echo "You running what? $shell???"
+    fi
+    """#
+}
+
+/*
+This is a simple example of a command line tool that manages Python virtual environments.
+It includes commands to create, activate, deactivate, and delete a virtual environment.
+Commands and arguments are prefixed with a description for help section.
+*/
 ("Python venv management") \
 venv {
     ("Create a new virtual environment")\
@@ -48,4 +74,57 @@ venv {
     "$(exit -1)"
     echo "This command has a | prefix"
     echo "This command will not run if the previous command succeeds"
+}
+
+/*
+This is an example showing how to use various argument types
+run `args --help`!
+*/
+("Test various argument types") \
+args {
+    ("Exactly two arguments needed") \
+    two ("First mandatory arg")arg1 ("Second mandatory arg")arg2 {
+        echo "Arg1: [$arg1]"
+        echo "Arg2: [$arg2]"
+
+    }
+   ("At least 1 args, the last is always arg2") \
+    complex1 ("Zero or more")*arg1 ("Required flag")arg2{
+        echo "Arg1: [$arg1]"
+        echo "Arg2: [$arg2]"
+    }
+
+    ("At least 1 args, the first is always arg1, unless if it's the only one") \
+    complex2 ("zero or one")?arg1 ("one or more")+arg2  {
+        echo "Arg1: [$arg1]"
+        echo "Arg2: [$arg2]"
+    }
+
+    ("Optional flags, can be in any order")\
+    val_flags str_flag=("Long name flag")"" n=("Short name flag")42 empty_flag=("Default is empty")#null {
+        echo #"" --str_flag: [$str_flag] default is \"\"""#
+        echo #"" --n: [$n] default is 42""#
+        echo #"" --empty_flag: [$empty_flag], default is \"\"""#
+        if "[" "$n" -lt 42 "]"; then
+            echo " -n flag is smaller than 42 (n == $n)"
+        elif "[" "$n" -gt 42 "]"; then
+            echo " -n flag is greater than 42 (n == $n)"
+        elif "[" "$n" -eq 42 "]"; then
+            echo " -n flag is equal to 42"
+        fi
+    }
+
+    ("Boolean optional flags") \
+    bool_flags a=("Set to make it true")#false b=("Set to make it false")#true {
+        if "$a"; then
+            echo " -a present (a == true)"
+        else
+            echo " -a absent (a == false)"
+        fi
+        if "$b"; then
+            echo " -b is absent (b == true)"
+        else
+            echo " -b present (b == false)"
+        fi
+    }
 }
