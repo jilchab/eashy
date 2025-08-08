@@ -49,3 +49,24 @@ venv {
     echo "This command has a | prefix"
     echo "This command will not run if the previous command succeeds"
 }
+
+nargs {
+    two arg1 arg2 {
+        echo "This command has two arguments: $arg1 and $arg2"
+    }
+    one_or_more +arg1 {
+        echo "This command has at least one argument: $arg1"
+    }
+    zero_or_more *arg1 {
+        echo "This command has zero or more argument: $arg1"
+    }
+    zero_or_one ?arg1 {
+        echo "This command has zero or one argument: $arg1"
+    }
+    optional arg1="default" {
+        echo "This command has an optional argument: $arg1"
+    }
+    zero_or_more_opt *arg1="default default2" {
+        echo "This command has zero or more arguments: $arg1"
+    }
+}

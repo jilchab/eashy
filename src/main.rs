@@ -2,12 +2,12 @@ use kdl::KdlDocument;
 use std::fs;
 use anyhow::Error;
 
-mod command;
-mod shell_generator;
+use crate::parser::Command;
+
 mod parser;
+mod shell_generator;
 
 fn main() -> Result<(), Error> {
-    // Read the KDL file specified as the first command line argument
     let filename = std::env::args()
         .nth(1)
         .ok_or(Error::msg("No KDL file specified"))?;
@@ -17,10 +17,12 @@ fn main() -> Result<(), Error> {
         .parse()
         .map_err(|_| Error::msg("Failed to parse KDL file"))?;
 
-    // Convert KDL nodes to command structures
-    let commands = parser::parse_commands(&doc);
-    dbg!(&commands);
-    // Generate shell script
+    let commands = doc
+        .nodes()
+        .iter()
+        .map(|node| Command::parse(node, None))
+        .collect::<Vec<Command>>();
+
     let output = shell_generator::generate_script(&commands);
 
     fs::write("generated_cli.sh", output)?;
