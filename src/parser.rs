@@ -238,7 +238,7 @@ impl Command {
 
         if let Children::Subcmds(subcommands) = &self.children {
             help_string.push_str(&format!("\n{TITLE}Commands:{RESET}\n"));
-            let width = std::cmp::min(subcommands.iter().map(|cmd| cmd.name.len()).max().unwrap_or(0), 20);
+            let width = self.get_max_width();
             for subcmd in subcommands {
                 help_string.push_str(&format!("  {COMMAND}{:width$}{RESET}  {}\n", subcmd.name, subcmd.description.as_ref().unwrap_or(&String::new())));
             }
@@ -247,10 +247,7 @@ impl Command {
         let pos_args = self.get_positional_arguments();
         if !pos_args.is_empty() {
             help_string.push_str(&format!("\n{TITLE}Positional arguments:{RESET}\n"));
-            let mut width = 0;
-            for arg in &pos_args {
-                width = std::cmp::min(20, std::cmp::max(width, arg.name.len()));
-            }
+            let width = self.get_max_width();
             for arg in pos_args {
                 help_string.push_str(&format!("  {COMMAND}{:width$}{RESET}  {}\n", arg.name, arg.help));
             }
@@ -258,11 +255,7 @@ impl Command {
 
         let opt_args = self.get_optional_arguments();
         help_string.push_str(&format!("\n{TITLE}Options:{RESET}\n"));
-        let mut width = "-h, --help".len(); // Minimum width as help flag because it is always present
-        for arg in &opt_args {
-            let flag_len = if arg.name.len() == 1 { 2 } else { arg.name.len() + 2 };
-            width = std::cmp::min(20, std::cmp::max(width, flag_len));
-        }
+        let width = self.get_max_width();
         for arg in opt_args {
             let flag = if arg.name.len() == 1 {
                 format!("-{}", arg.name)
@@ -274,5 +267,19 @@ impl Command {
         help_string.push_str(&format!("  {COMMAND}{:width$}{RESET}  Show help information\n", "-h, --help"));
 
         help_string
+    }
+
+    pub fn get_max_width(&self) -> usize {
+        let mut width = "-h, --help".len();
+        if let Children::Subcmds(subcmds) = &self.children {
+            for subcmd in subcmds {
+                width = std::cmp::min(40, std::cmp::max(width, subcmd.name.len()));
+            }
+        }
+        for arg in &self.arguments {
+            let len = if arg.name.len() == 1 { 2 } else { arg.name.len() + 2 };
+            width = std::cmp::min(40, std::cmp::max(width, len));
+        }
+        width
     }
 }
