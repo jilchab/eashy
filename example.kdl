@@ -88,14 +88,14 @@ args {
     }
 }
 
-&early_ret_on_error {
+&stop_on_error {
     echo "This command has a & prefix"
-    "$(exit -1)"
-    echo "This command will not run if the previous command fails"
+    "false"
+    echo "This command will not run as the previous command fails"
 }
 
-|early_ret_on_ok {
-    "$(exit -1)"
+|stop_on_success {
+    "false"
     echo "This command has a | prefix"
-    echo "This command will not run if the previous command succeeds"
+    echo "This command will not run as the previous command succeeds"
 }

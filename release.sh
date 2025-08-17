@@ -128,6 +128,8 @@ else
     rm -f Cargo.toml.backup
 fi
 
+cargo build --release
+
 # Git commit and tag
 if [ "$DRY_RUN" = true ]; then
     echo "🔍 [DRY RUN] Would run:"
@@ -137,7 +139,7 @@ if [ "$DRY_RUN" = true ]; then
     echo "  git push"
     echo "  git push origin \"${TAG}\""
 else
-    git add Cargo.toml
+    git add Cargo.toml Cargo.lock
     git commit -m "Release ${TAG}"
     git tag "${TAG}"
     git push
@@ -155,13 +157,13 @@ build_and_package() {
     if [ "$DRY_RUN" = true ]; then
         echo "🔍 [DRY RUN] Would run:"
         echo "  rustup target add \"$target\""
-        echo "  cross build --release --target \"$target\""
+        echo "  cargo zigbuild --release --target \"$target\""
         echo "  Package binary into ${ARCHIVE_PREFIX}-${target}.tar.gz and .zip"
         return 0
     fi
 
     rustup target add "$target" || true
-    cross build --release --target "$target"
+    cargo zigbuild --release --target "$target"
 
     BIN_PATH="target/$target/release/$BINARY_NAME"
 

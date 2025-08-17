@@ -59,7 +59,7 @@ eashy
 3. Source the generated script:
 
 ```bash
-source ~/.eashy/easy.sh
+source ~/.eashy/eashy.sh
 ```
 Add this line to your ~/.bashrc or ~/.zshrc!
 
@@ -129,14 +129,14 @@ Eashy supports special prefixes for flow control:
 Example:
 
 ```kdl
-&early_ret_on_error {
+&stop_on_error {
     echo "This command has a & prefix"
-    "$(exit 1)"
+    "false"
     echo "This will not run as the previous command fails"
 }
 
-|early_ret_on_ok {
-    "$(exit 1)"
+|stop_on_success {
+    "false"
     echo "This command has a | prefix"
     echo "This will not run as the previous command succeeds"
 }
@@ -241,5 +241,4 @@ This project is licensed under the Apache-2.0 License - see the [LICENSE](LICENS
 ## Links
 
 - [Repository](https://github.com/jilchab/eashy)
-- [Documentation](https://docs.rs/eashy)
 - [KDL Language](https://kdl.dev/) - Learn more about the KDL format
