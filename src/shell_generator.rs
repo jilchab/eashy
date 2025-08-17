@@ -1,15 +1,17 @@
 use kdl::KdlValue;
 
-use crate::parser::{ArgPrefix, Children, Command, CmdPrefix, Argument, ERROR, RESET, TITLE};
+use crate::parser::{ArgPrefix, Argument, Children, CmdPrefix, Command, ERROR, RESET, TITLE};
 
 /// Generate shell script from commands
 pub fn generate_script(commands: &[Command]) -> String {
     let mut output = String::new();
-    output.push_str(r#"#!/bin/bash
+    output.push_str(
+        r#"#!/bin/bash
 # Auto-generated CLI shell functions
 # All modifications will be lost when terminal is reloaded
 
-"#);
+"#,
+    );
 
     for command in commands {
         output.push_str(&generate_function(command));
@@ -58,24 +60,39 @@ fn generate_subcommand_func_body(output: &mut String, command: &Command, subcomm
 
     // Handle help flags as special subcommands
     output.push_str("        -h|--help)\n");
-    output.push_str(&format!("            printf \"{}\"\n", escape_printf(&command.get_help_string())));
+    output.push_str(&format!(
+        "            printf \"{}\"\n",
+        escape_printf(&command.get_help_string())
+    ));
     output.push_str("            return\n");
     output.push_str("            ;;\n");
 
     // Handle regular subcommands
     for subcommand in subcommands {
-        output.push_str(&format!("        {}) {} \"$@\";;\n", subcommand.name, subcommand.get_mangled_function_name()));
+        output.push_str(&format!(
+            "        {}) {} \"$@\";;\n",
+            subcommand.name,
+            subcommand.get_mangled_function_name()
+        ));
     }
 
     // Handle unknown options
     output.push_str("        -*)\n");
-    output.push_str(&generate_error_message("Unknown option: $subcmd", command, "            "));
+    output.push_str(&generate_error_message(
+        "Unknown option: $subcmd",
+        command,
+        "            ",
+    ));
     output.push_str("            return 1\n");
     output.push_str("            ;;\n");
 
     // Handle unknown subcommands
     output.push_str("        *)\n");
-    output.push_str(&generate_error_message("Unknown subcommand: $subcmd", command, "            "));
+    output.push_str(&generate_error_message(
+        "Unknown subcommand: $subcmd",
+        command,
+        "            ",
+    ));
     output.push_str("            return 1\n");
     output.push_str("            ;;\n");
     output.push_str("    esac\n");
@@ -107,7 +124,10 @@ fn generate_leaf_func_body(output: &mut String, command: &Command, command_lines
 
     // Handle help
     output.push_str("            -h|--help)\n");
-    output.push_str(&format!("                printf \"{}\"\n", escape_printf(&command.get_help_string())));
+    output.push_str(&format!(
+        "                printf \"{}\"\n",
+        escape_printf(&command.get_help_string())
+    ));
     output.push_str("                return\n");
     output.push_str("                ;;\n");
 
@@ -119,16 +139,20 @@ fn generate_leaf_func_body(output: &mut String, command: &Command, command_lines
             format!("--{}", arg.name)
         };
 
-        if let Some(KdlValue::Bool(b)) = &arg.option  {
+        if let Some(KdlValue::Bool(b)) = &arg.option {
             output.push_str(&format!("            {})\n", flag));
-            output.push_str(&format!("                {}={}\n", arg.name, (!b).to_string()));
+            output.push_str(&format!("                {}={}\n", arg.name, !b));
             output.push_str("                shift\n");
             output.push_str("                ;;\n");
         } else {
             // String flag - requires value
             output.push_str(&format!("            {})\n", flag));
             output.push_str("                if [ $# -lt 2 ]; then\n");
-            output.push_str(&generate_error_message(&format!("{} requires a value", flag), command, "                    "));
+            output.push_str(&generate_error_message(
+                &format!("{} requires a value", flag),
+                command,
+                "                    ",
+            ));
             output.push_str("                    return 1\n");
             output.push_str("                fi\n");
             output.push_str(&format!("                {}=\"$2\"\n", arg.name));
@@ -139,14 +163,22 @@ fn generate_leaf_func_body(output: &mut String, command: &Command, command_lines
 
     // Handle unknown options
     output.push_str("            -*)\n");
-    output.push_str(&generate_error_message("Unknown option: $1", command, "                "));
+    output.push_str(&generate_error_message(
+        "Unknown option: $1",
+        command,
+        "                ",
+    ));
     output.push_str("                return 1\n");
     output.push_str("                ;;\n");
 
     // Handle positional arguments
     output.push_str("            *)\n");
     if positional_args.is_empty() {
-        output.push_str(&generate_error_message("Too many arguments", command, "                "));
+        output.push_str(&generate_error_message(
+            "Too many arguments",
+            command,
+            "                ",
+        ));
         output.push_str("                return 1\n");
     } else {
         generate_positional_parsing(output, &positional_args, command);
@@ -172,7 +204,11 @@ fn generate_leaf_func_body(output: &mut String, command: &Command, command_lines
     }
 }
 
-fn generate_positional_parsing(output: &mut String, positional_args: &[&Argument], command: &Command) {
+fn generate_positional_parsing(
+    output: &mut String,
+    positional_args: &[&Argument],
+    command: &Command,
+) {
     output.push_str("                case \"$_pos_count\" in\n");
 
     for (index, arg) in positional_args.iter().enumerate() {
@@ -190,7 +226,11 @@ fn generate_positional_parsing(output: &mut String, positional_args: &[&Argument
     }
 
     output.push_str("                    *)\n");
-    output.push_str(&generate_error_message("Too many arguments", command, "                        "));
+    output.push_str(&generate_error_message(
+        "Too many arguments",
+        command,
+        "                        ",
+    ));
     output.push_str("                        return 1\n");
     output.push_str("                        ;;\n");
     output.push_str("                esac\n");
@@ -202,22 +242,54 @@ fn generate_single_arg_case(output: &mut String, index: usize, arg: &Argument) {
     advance_position_and_shift(output);
 }
 
-fn generate_optional_arg_case(output: &mut String, index: usize, arg: &Argument, positional_args: &[&Argument]) {
-    let remaining_required: usize = positional_args.iter().skip(index + 1)
-        .map(|a| if matches!(a.prefix, ArgPrefix::None | ArgPrefix::OneMore) { 1 } else { 0 })
+fn generate_optional_arg_case(
+    output: &mut String,
+    index: usize,
+    arg: &Argument,
+    positional_args: &[&Argument],
+) {
+    let remaining_required: usize = positional_args
+        .iter()
+        .skip(index + 1)
+        .map(|a| {
+            if matches!(a.prefix, ArgPrefix::None | ArgPrefix::OneMore) {
+                1
+            } else {
+                0
+            }
+        })
         .sum();
     output.push_str(&format!("                    {})\n", index));
-    output.push_str(&format!("                        if [ $# -gt {} ]; then\n", remaining_required));
-    output.push_str(&format!("                            {}=\"$1\"\n", arg.name));
+    output.push_str(&format!(
+        "                        if [ $# -gt {} ]; then\n",
+        remaining_required
+    ));
+    output.push_str(&format!(
+        "                            {}=\"$1\"\n",
+        arg.name
+    ));
     output.push_str("                            shift\n");
     output.push_str("                        fi\n");
     output.push_str("                        _pos_count=$((_pos_count + 1))\n");
     output.push_str("                        ;;\n");
 }
 
-fn generate_variadic_arg_case(output: &mut String, index: usize, arg: &Argument, positional_args: &[&Argument]) {
-    let remaining_required: usize = positional_args.iter().skip(index + 1)
-        .map(|a| if matches!(a.prefix, ArgPrefix::None | ArgPrefix::OneMore) { 1 } else { 0 })
+fn generate_variadic_arg_case(
+    output: &mut String,
+    index: usize,
+    arg: &Argument,
+    positional_args: &[&Argument],
+) {
+    let remaining_required: usize = positional_args
+        .iter()
+        .skip(index + 1)
+        .map(|a| {
+            if matches!(a.prefix, ArgPrefix::None | ArgPrefix::OneMore) {
+                1
+            } else {
+                0
+            }
+        })
         .sum();
 
     let condition = if index == positional_args.len() - 1 {
@@ -227,11 +299,23 @@ fn generate_variadic_arg_case(output: &mut String, index: usize, arg: &Argument,
     };
 
     output.push_str(&format!("                    {})\n", index));
-    output.push_str(&format!("                        while {} && [ \"${{1#-}}\" = \"$1\" ]; do\n", condition));
-    output.push_str(&format!("                            if [ -z \"${}\" ]; then\n", arg.name));
-    output.push_str(&format!("                                {}=\"$1\"\n", arg.name));
+    output.push_str(&format!(
+        "                        while {} && [ \"${{1#-}}\" = \"$1\" ]; do\n",
+        condition
+    ));
+    output.push_str(&format!(
+        "                            if [ -z \"${}\" ]; then\n",
+        arg.name
+    ));
+    output.push_str(&format!(
+        "                                {}=\"$1\"\n",
+        arg.name
+    ));
     output.push_str("                            else\n");
-    output.push_str(&format!("                                {}=\"${} $1\"\n", arg.name, arg.name));
+    output.push_str(&format!(
+        "                                {}=\"${} $1\"\n",
+        arg.name, arg.name
+    ));
     output.push_str("                            fi\n");
     output.push_str("                            shift\n");
     output.push_str("                        done\n");
@@ -245,14 +329,22 @@ fn advance_position_and_shift(output: &mut String) {
     output.push_str("                        ;;\n");
 }
 
-fn generate_positional_validation(output: &mut String, positional_args: &[&Argument], command: &Command) {
+fn generate_positional_validation(
+    output: &mut String,
+    positional_args: &[&Argument],
+    command: &Command,
+) {
     for arg in positional_args.iter() {
         match arg.prefix {
             ArgPrefix::None => {
-                 output.push_str(&generate_required_validation(arg, command, "is required"));
+                output.push_str(&generate_required_validation(arg, command, "is required"));
             }
             ArgPrefix::OneMore => {
-                output.push_str(&generate_required_validation(arg, command, "is required at least once"));
+                output.push_str(&generate_required_validation(
+                    arg,
+                    command,
+                    "is required at least once",
+                ));
             }
             ArgPrefix::ZeroOne | ArgPrefix::ZeroMore => {
                 // These are optional, no validation needed
@@ -265,7 +357,11 @@ fn generate_required_validation(arg: &Argument, command: &Command, message: &str
     let mut output = String::new();
 
     output.push_str(&format!("    if [ -z \"${}\" ]; then\n", arg.name));
-    output.push_str(&generate_error_message(&format!("{} {}", arg.name, message), command, "        "));
+    output.push_str(&generate_error_message(
+        &format!("{} {}", arg.name, message),
+        command,
+        "        ",
+    ));
     output.push_str("        return 1\n");
     output.push_str("    fi\n");
     output
@@ -275,7 +371,7 @@ fn format_default_value(value: &KdlValue) -> String {
     match value {
         KdlValue::Bool(val) => val.to_string(),
         KdlValue::Null => "\"\"".to_string(),
-        _ => format!("\"{}\"", value.to_string()),
+        _ => format!("\"{}\"", value),
     }
 }
 
@@ -296,9 +392,12 @@ fn generate_autocompletion(command: &Command) -> String {
     output.push_str("    local previous=($@)\n");
     output.push_str("    case \"${previous[@]}\" in\n");
     generate_autocompletion_case(&mut output, command);
-    output.push_str("        *) return 0 ;;\n");
+    output.push_str("        *) ;;\n");
     output.push_str("    esac\n");
-    output.push_str(&format!("    array+=(\"{:<width$}Show help information\" \"{:<width$}Show help information\")\n", "-h:", "--help:"));
+    output.push_str(&format!(
+        "    array+=(\"{:<width$}Show help information\" \"{:<width$}Show help information\")\n",
+        "-h:", "--help:"
+    ));
     output.push_str("    for elem in \"${array[@]}\"; do\n");
     output.push_str("        if [[ $elem == \"$current\"* ]]; then echo \"$elem\"; fi\n");
     output.push_str("    done\n");
@@ -307,28 +406,46 @@ fn generate_autocompletion(command: &Command) -> String {
 }
 
 fn generate_autocompletion_case(output: &mut String, command: &Command) {
-    output.push_str(&format!("        \"{}\") array=(\n", command.get_command_path_string()));
-
-    let width = command.get_max_width() + 2;
+    let mut comp_list = vec![];
 
     if let Children::Subcmds(subcommands) = &command.children {
-        for subcommand in subcommands {
-            output.push_str(&format!("            \"{:width$}{}\"\n", subcommand.name.clone() + ":", subcommand.description.as_ref().unwrap_or(&String::new())));
-        }
+        comp_list.extend(subcommands.iter().map(|c| {
+            (
+                c.name.clone() + ":",
+                c.description.as_ref().unwrap_or(&String::new()).clone(),
+            )
+        }))
     }
-    for arg in command.get_optional_arguments() {
-        let flag = if arg.name.len() == 1 {
-            format!("-{}", arg.name)
-        } else {
-            format!("--{}", arg.name)
-        };
-        if matches!(arg.option, Some(KdlValue::Bool(_))) {
-            output.push_str(&format!("            \"{:width$} {}\"\n", flag + ":", arg.help));
-        } else {
-            output.push_str(&format!("            \"{:width$} <{}> {}\"\n", flag + ":", arg.name, arg.help));
-        }
+
+    comp_list.extend(command.get_optional_arguments().iter().map(|arg| {
+        (
+            if arg.name.len() == 1 {
+                format!("-{}:", arg.name)
+            } else {
+                format!("--{}:", arg.name)
+            },
+            if matches!(arg.option, Some(KdlValue::Bool(_))) {
+                arg.help.clone()
+            } else {
+                format!("<{}> {}", arg.name, arg.help)
+            },
+        )
+    }));
+
+    if comp_list.is_empty() {
+        return;
+    }
+
+    output.push_str(&format!(
+        "        \"{}\") array=(\n",
+        command.get_command_path_string()
+    ));
+    let width = command.get_max_width() + 2;
+    for (name, desc) in comp_list {
+        output.push_str(&format!("            \"{name:width$} {desc}\"\n"))
     }
     output.push_str("            );;\n");
+
     if let Children::Subcmds(ref subcommands) = command.children {
         for subcommand in subcommands {
             generate_autocompletion_case(output, subcommand);
@@ -347,7 +464,10 @@ fn generate_script_end(commands: &[Command]) -> String {
     }
     output.push_str("elif [ -n \"${BASH_VERSION:-}\" ]; then [ \"${BASH_VERSINFO[0]}\" -lt 4 ] && no_sort=\"\" || no_sort=\"-o nosort\"\n");
     for command in commands {
-        output.push_str(&format!("    complete -o default $no_sort -F _complete_bash {}\n", command.name));
+        output.push_str(&format!(
+            "    complete -o default $no_sort -F _complete_bash {}\n",
+            command.name
+        ));
     }
     output.push_str("fi\n");
     output
@@ -356,8 +476,19 @@ fn generate_script_end(commands: &[Command]) -> String {
 fn generate_error_message(error_msg: &str, command: &Command, indent: &str) -> String {
     let mut output = String::new();
 
-    output.push_str(&format!("{}printf \"{ERROR}Error:{RESET} {}\\n\\n\" >&2\n", indent, error_msg));
-    output.push_str(&format!("{}printf \"{TITLE}Usage:{RESET} {}\\n\\n\" >&2\n", indent, escape_printf(&command.get_usage_string())));
-    output.push_str(&format!("{}printf \"Try '{} --help' for more information.\\n\" >&2\n", indent, command.get_command_path_string()));
+    output.push_str(&format!(
+        "{}printf \"{ERROR}Error:{RESET} {}\\n\\n\" >&2\n",
+        indent, error_msg
+    ));
+    output.push_str(&format!(
+        "{}printf \"{TITLE}Usage:{RESET} {}\\n\\n\" >&2\n",
+        indent,
+        escape_printf(&command.get_usage_string())
+    ));
+    output.push_str(&format!(
+        "{}printf \"Try '{} --help' for more information.\\n\" >&2\n",
+        indent,
+        command.get_command_path_string()
+    ));
     output
 }

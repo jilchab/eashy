@@ -6,12 +6,12 @@ Eashy is a command-line tool that generates shell functions with subcommands and
 
 ## Features
 
-- 🚀 **Simple KDL syntax**: Define commands using the human-friendly KDL format
-- 📖 **Automatic help generation**: Built-in `--help` support for all commands and subcommands
-- 🔧 **Nested subcommands**: Support for multiple levels of command hierarchies
-- 🎨 **Beautiful output**: Colorized help text and command output
-- ⚡ **Shell function generation**: Automatically generates optimized shell functions
-- 🔀 **Flow control**: Built-in support for conditional execution with prefixes
+- **Simple KDL syntax**: Define commands using the human-friendly KDL format
+- **Automatic help generation**: Built-in `--help` support for all commands and subcommands
+- **Nested subcommands**: Support for multiple levels of command hierarchies
+- **Beautiful output**: Colorized help text and command output
+- **Shell function generation**: Automatically generates optimized shell functions
+- **Auto complete**: Built-in support for autocomplete for bash/zsh
 
 ## Installation
 

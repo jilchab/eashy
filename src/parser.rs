@@ -2,11 +2,11 @@ use std::str::FromStr;
 
 use kdl::{KdlDocument, KdlEntry, KdlIdentifier, KdlNode, KdlValue};
 
-pub const TITLE: &str = "\\033[1;32m";      // Bold green
-pub const COMMAND: &str = "\\033[1;36m";    // Bold cyan
-pub const OPTIONS: &str = "\\033[0;36m";    // Normal cyan
-pub const ERROR: &str = "\\033[1;31m";      // Bold red
-pub const RESET: &str = "\\033[0m";         // Reset
+pub const TITLE: &str = "\\033[1;32m"; // Bold green
+pub const COMMAND: &str = "\\033[1;36m"; // Bold cyan
+pub const OPTIONS: &str = "\\033[0;36m"; // Normal cyan
+pub const ERROR: &str = "\\033[1;31m"; // Bold red
+pub const RESET: &str = "\\033[0m"; // Reset
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ArgPrefix {
@@ -23,7 +23,7 @@ impl ArgPrefix {
                 '*' => (ArgPrefix::ZeroMore, name[1..].to_string()),
                 '+' => (ArgPrefix::OneMore, name[1..].to_string()),
                 '?' => (ArgPrefix::ZeroOne, name[1..].to_string()),
-                _   => (ArgPrefix::None, name.to_string()),
+                _ => (ArgPrefix::None, name.to_string()),
             }
         } else {
             (ArgPrefix::None, name.to_string())
@@ -35,7 +35,7 @@ impl ArgPrefix {
 pub enum CmdPrefix {
     UntilError,
     UntilSuccess,
-    None
+    None,
 }
 
 impl CmdPrefix {
@@ -44,7 +44,7 @@ impl CmdPrefix {
             match first_char {
                 '&' => (CmdPrefix::UntilError, name[1..].to_string()),
                 '|' => (CmdPrefix::UntilSuccess, name[1..].to_string()),
-                _   => (CmdPrefix::None, name.to_string()),
+                _ => (CmdPrefix::None, name.to_string()),
             }
         } else {
             (CmdPrefix::None, name.to_string())
@@ -68,7 +68,8 @@ impl Argument {
         };
 
         let (mut prefix, name) = ArgPrefix::extract(&name);
-        let help = entry.ty()
+        let help = entry
+            .ty()
             .unwrap_or(&KdlIdentifier::from_str(&name.to_uppercase()).unwrap())
             .to_string()
             .trim_matches('"')
@@ -107,11 +108,7 @@ impl Command {
         let mut path = path.unwrap_or_default();
         path.push(name.clone());
         let description = node.ty().map(|id| id.value().to_string());
-        let arguments: Vec<Argument> = node
-            .entries()
-            .iter()
-            .map(Argument::parse)
-            .collect();
+        let arguments: Vec<Argument> = node.entries().iter().map(Argument::parse).collect();
 
         let children = if let Some(children) = node.children() {
             // Check if this has subcommands or is a leaf command
@@ -119,11 +116,13 @@ impl Command {
 
             if has_nested_subcommands {
                 // This has subcommands
-                Children::Subcmds(children
-                    .nodes()
-                    .iter()
-                    .map(|n| Self::parse(n, Some(path.clone())))
-                    .collect())
+                Children::Subcmds(
+                    children
+                        .nodes()
+                        .iter()
+                        .map(|n| Self::parse(n, Some(path.clone())))
+                        .collect(),
+                )
             } else {
                 Children::Body(Self::parse_command_body(children))
             }
@@ -178,11 +177,17 @@ impl Command {
     }
 
     pub fn get_positional_arguments(&self) -> Vec<&Argument> {
-        self.arguments.iter().filter(|arg| arg.option.is_none()).collect()
+        self.arguments
+            .iter()
+            .filter(|arg| arg.option.is_none())
+            .collect()
     }
 
     pub fn get_optional_arguments(&self) -> Vec<&Argument> {
-        self.arguments.iter().filter(|arg| arg.option.is_some()).collect()
+        self.arguments
+            .iter()
+            .filter(|arg| arg.option.is_some())
+            .collect()
     }
 
     pub fn get_usage_string(&self) -> String {
@@ -190,7 +195,7 @@ impl Command {
 
         // First, check for subcommands
         if matches!(self.children, Children::Subcmds(_)) {
-            args.push(format!("<subcommand>"));
+            args.push("<subcommand>".to_string());
         }
         // Then, add positional arguments
         for arg in &self.arguments {
@@ -199,14 +204,16 @@ impl Command {
                 match arg.prefix {
                     ArgPrefix::None => args.push(format!("<{}>", display_name)),
                     ArgPrefix::ZeroMore => args.push(format!("[<{}> ...]", display_name)),
-                    ArgPrefix::OneMore => args.push(format!("<{}> [<{}> ...]", display_name, display_name)),
+                    ArgPrefix::OneMore => {
+                        args.push(format!("<{}> [<{}> ...]", display_name, display_name))
+                    }
                     ArgPrefix::ZeroOne => args.push(format!("[<{}>]", display_name)),
                 }
             }
         }
         // Finally add optional arguments
         for arg in &self.arguments {
-            if let Some(_) = &arg.option {
+            if arg.option.is_some() {
                 let flag = if arg.name.len() == 1 {
                     format!("-{}", arg.name)
                 } else {
@@ -223,9 +230,15 @@ impl Command {
         }
         args.push("[-h|--help]".to_string());
 
-        format!("{COMMAND}{} {OPTIONS}{}{RESET}",
+        format!(
+            "{COMMAND}{} {OPTIONS}{}{RESET}",
             self.get_command_path_string(),
-            if args.is_empty() { String::new() } else { args.join(" ") })
+            if args.is_empty() {
+                String::new()
+            } else {
+                args.join(" ")
+            }
+        )
     }
 
     pub fn get_help_string(&self) -> String {
@@ -234,13 +247,20 @@ impl Command {
             help_string.push_str(&format!("{}\n\n", desc));
         }
 
-        help_string.push_str(&format!("{TITLE}Usage:{RESET} {}\n", self.get_usage_string()));
+        help_string.push_str(&format!(
+            "{TITLE}Usage:{RESET} {}\n",
+            self.get_usage_string()
+        ));
 
         if let Children::Subcmds(subcommands) = &self.children {
             help_string.push_str(&format!("\n{TITLE}Commands:{RESET}\n"));
             let width = self.get_max_width();
             for subcmd in subcommands {
-                help_string.push_str(&format!("  {COMMAND}{:width$}{RESET}  {}\n", subcmd.name, subcmd.description.as_ref().unwrap_or(&String::new())));
+                help_string.push_str(&format!(
+                    "  {COMMAND}{:width$}{RESET}  {}\n",
+                    subcmd.name,
+                    subcmd.description.as_ref().unwrap_or(&String::new())
+                ));
             }
         }
 
@@ -249,7 +269,10 @@ impl Command {
             help_string.push_str(&format!("\n{TITLE}Positional arguments:{RESET}\n"));
             let width = self.get_max_width();
             for arg in pos_args {
-                help_string.push_str(&format!("  {COMMAND}{:width$}{RESET}  {}\n", arg.name, arg.help));
+                help_string.push_str(&format!(
+                    "  {COMMAND}{:width$}{RESET}  {}\n",
+                    arg.name, arg.help
+                ));
             }
         }
 
@@ -262,9 +285,15 @@ impl Command {
             } else {
                 format!("--{}", arg.name)
             };
-            help_string.push_str(&format!("  {COMMAND}{:width$}{RESET}  {}\n", flag, arg.help));
+            help_string.push_str(&format!(
+                "  {COMMAND}{:width$}{RESET}  {}\n",
+                flag, arg.help
+            ));
         }
-        help_string.push_str(&format!("  {COMMAND}{:width$}{RESET}  Show help information\n", "-h, --help"));
+        help_string.push_str(&format!(
+            "  {COMMAND}{:width$}{RESET}  Show help information\n",
+            "-h, --help"
+        ));
 
         help_string
     }
@@ -277,7 +306,11 @@ impl Command {
             }
         }
         for arg in &self.arguments {
-            let len = if arg.name.len() == 1 { 2 } else { arg.name.len() + 2 };
+            let len = if arg.name.len() == 1 {
+                2
+            } else {
+                arg.name.len() + 2
+            };
             width = std::cmp::min(40, std::cmp::max(width, len));
         }
         width
