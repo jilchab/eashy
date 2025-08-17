@@ -50,15 +50,20 @@ venv {
 
 2. Generate shell functions:
 
+Generate the shell script for all the function contains in default.kdl
+
 ```bash
-eashy commands.kdl
+eashy
 ```
 
 3. Source the generated script:
 
 ```bash
-source generated_cli.sh
+source ~/.eashy/easy.sh
 ```
+Add this line to your ~/.bashrc or ~/.zshrc!
+
+(You can change the input/output files, try `eashy --help` for more info)
 
 4. Use your new commands with automatic help:
 
@@ -73,7 +78,7 @@ venv init             # Creates and activates virtual environment
 ### Basic Command Structure
 
 ```kdl
-my_macro {
+my_cmd {
     shell_command arg1 arg2
     another_command "with" "arguments"
 }
@@ -144,7 +149,6 @@ Eashy generates optimized shell functions with:
 - **Automatic help parsing**: Recognizes `-h` and `--help` flags
 - **Colorized output**: Beautiful, inspired by `cargo` or `uv` help section
 - **Error handling**: Proper error messages for unknown subcommands
-- **Clean organization**: Internal functions are prefixed to avoid conflicts
 
 ## Use Cases
 

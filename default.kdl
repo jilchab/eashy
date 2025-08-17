@@ -1,0 +1,38 @@
+/************************************************************
+    You can add and remove shell functions here.
+    Please refer to the documentation for more information.
+*************************************************************/
+
+/*
+Example for managing Python virtual environments
+Note: This is just an example and you can delete it
+*/
+("Python venv management") \
+venv {
+    ("Create a new virtual environment") \
+    init {
+        python -m venv ".venv"
+        source ".venv/bin/activate"
+        echo "Activated virtual environment, version: $(python --version)"
+    }
+
+    ("Activate the virtual environment") \
+    activate {
+        source ".venv/bin/activate" && \
+        echo "Activated virtual environment, version: $(python --version)" || \
+        echo "Failed to activate virtual environment. Make sure .venv exists."
+    }
+
+    ("Deactivate the virtual environment") \
+    deactivate {
+        deactivate && echo "Deactivated virtual environment"
+    }
+    ("Delete the virtual environment") \
+    delete {
+        deactivate
+        rm -rf ".venv" && \
+        echo "Removed virtual environment"
+    }
+}
+
+// Try adding more

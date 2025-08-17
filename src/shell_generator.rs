@@ -6,7 +6,7 @@ use crate::parser::{ArgPrefix, Argument, Children, CmdPrefix, Command, ERROR, RE
 pub fn generate_script(commands: &[Command]) -> String {
     let mut output = String::new();
     output.push_str(
-        r#"#!/bin/bash
+        r#"
 # Auto-generated CLI shell functions
 # All modifications will be lost when terminal is reloaded
 

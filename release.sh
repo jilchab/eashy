@@ -178,6 +178,7 @@ build_and_package() {
     PKG_DIR="${DIST_DIR}/${ARCHIVE_PREFIX}-${target}"
     mkdir -p "$PKG_DIR"
     cp "$BIN_PATH" "$PKG_DIR/"
+    cp "default.kdl" "$PKG_DIR/"
 
     # Create archives
     echo "📦 Creating archives for $target..."

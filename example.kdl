@@ -35,19 +35,6 @@ venv {
         echo "Removed virtual environment"
     }
 }
-
-&early_ret_on_error {
-    echo "This command has a & prefix"
-    "$(exit -1)"
-    echo "This command will not run if the previous command fails"
-}
-
-|early_ret_on_ok {
-    "$(exit -1)"
-    echo "This command has a | prefix"
-    echo "This command will not run if the previous command succeeds"
-}
-
 /*
 This is an example showing how to use various argument types.
 Try running `args --help`!
@@ -99,4 +86,16 @@ args {
             echo " -b present (b == false)"
         fi
     }
+}
+
+&early_ret_on_error {
+    echo "This command has a & prefix"
+    "$(exit -1)"
+    echo "This command will not run if the previous command fails"
+}
+
+|early_ret_on_ok {
+    "$(exit -1)"
+    echo "This command has a | prefix"
+    echo "This command will not run if the previous command succeeds"
 }
