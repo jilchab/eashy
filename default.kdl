@@ -5,6 +5,7 @@
 
 /*
 Example for managing Python virtual environments
+Try now in your terminal `venv --help`
 Note: This is just an example and you can delete it
 */
 ("Python venv management") \

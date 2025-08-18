@@ -29,7 +29,6 @@ detect_platform() {
 }
 
 get_latest_version() {
-    echo "🔍 Fetching latest version..."
     version=$(curl -s "https://api.github.com/repos/jilchab/eashy/releases/latest" \
         | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' | head -n 1)
 
@@ -49,14 +48,12 @@ download_and_install() {
     archive="$BINARY_NAME-v$version-$target.tar.gz"
     url="https://github.com/jilchab/eashy/releases/download/v$version/$archive"
 
-    echo "📦 Downloading $url..."
-    if ! curl -L -o "$tmp_dir/$archive" "$url"; then
+    if ! curl -Lso  "$tmp_dir/$archive" "$url"; then
         echo "❌ Failed to download $archive" >&2
         rm -rf "$tmp_dir"
         exit 1
     fi
 
-    echo "📂 Extracting..."
     if ! (cd "$tmp_dir" && tar -xzf "$archive"); then
         echo "❌ Failed to extract $archive" >&2
         rm -rf "$tmp_dir"
@@ -73,17 +70,20 @@ download_and_install() {
         exit 1
     fi
 
-    default_kdl="$tmp_dir/default.kdl"
+    default_kdl_path="$tmp_dir/$BINARY_NAME-v$version-$target/default.kdl"
 
     mkdir -p "$BIN_DIR"
     cp "$binary_path" "$BIN_DIR/$BINARY_NAME"
-    cp "$default_kdl" "$DIR/default.kdl"
+
+    # Copy default.kdl if it exists in the archive
+    if [ -f "$default_kdl_path" ]; then
+        cp "$default_kdl_path" "$DIR/default.kdl"
+    else
+        echo "⚠️  default.kdl not found in archive, skipping..."
+    fi
+
     chmod +x "$BIN_DIR/$BINARY_NAME"
-
-    touch "$DIR/eashy.sh"
-
     rm -rf "$tmp_dir"
-    echo "✅ Binary installed successfully"
 }
 
 check_existing_installation() {
@@ -104,21 +104,16 @@ add_to_path() {
     case "$SHELL" in
         */zsh) shell_rc="$HOME/.zshrc" ;;
         */bash) shell_rc="$HOME/.bashrc" ;;
-        */fish) shell_rc="$HOME/.config/fish/config.fish" ;;
         *) shell_rc="$HOME/.profile" ;;
     esac
 
-    if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
-        echo ""
-        echo "📝 To use $BINARY_NAME, add it to your PATH:"
-        echo "   export PATH=\"$INSTALL_DIR:\$PATH\""
-        echo ""
-        echo "💡 Or add this line to your shell configuration ($shell_rc):"
-        echo "   echo 'export PATH=\"$INSTALL_DIR:\$PATH\"' >> $shell_rc"
-        echo ""
-    else
-        echo "✅ $INSTALL_DIR is already in your PATH"
-    fi
+    echo ""
+    echo "To use $BINARY_NAME, add it to your PATH:"
+    echo "   export PATH=\"$BIN_DIR:\$PATH\""
+    echo ""
+    echo "Or add this line to your shell configuration ($shell_rc):"
+    echo "   echo 'export PATH=\"$BIN_DIR:\$PATH\"' >> $shell_rc"
+    echo ""
 }
 
 install() {
@@ -129,16 +124,19 @@ install() {
     target="$(detect_platform)"
     version="$(get_latest_version)"
 
-    echo "📋 Detected version: v$version"
-    echo "📋 Detected target: $target"
-
     download_and_install "$version" "$target"
 
-    add_to_path
+    # Run it once
+    "$BIN_DIR/$BINARY_NAME" --quiet
+    source "$DIR/eashy.sh"
 
-    echo "✅ $BINARY_NAME v$version installed successfully!"
     echo ""
-    echo "🎉 Run '$BINARY_NAME --help' to get started"
+    echo "$BINARY_NAME v$version installed successfully"
+
+    add_to_path
+    echo "You can now modify $DIR/default.kdl and run:"
+    echo "   eashy"
+    echo "Or try running '$BINARY_NAME --help' to get started"
 }
 
 install "$@"
