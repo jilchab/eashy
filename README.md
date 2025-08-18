@@ -6,12 +6,12 @@ Eashy is a command-line tool that generates shell functions with subcommands and
 
 ## Features
 
-- **Simple KDL syntax**: Define commands using the human-friendly KDL format
-- **Automatic help generation**: Built-in `--help` support for all commands and subcommands
-- **Nested subcommands**: Support for multiple levels of command hierarchies
-- **Beautiful output**: Colorized help text and command output
-- **Shell function generation**: Automatically generates optimized shell functions
-- **Auto complete**: Built-in support for autocomplete for bash/zsh
+- 🚀 **Simple KDL syntax**: Define commands using the human-friendly KDL format
+- 📖 **Automatic help generation**: Built-in `--help` support for all commands and subcommands
+- 👑 **Nested subcommands**: Support for multiple levels of command hierarchies
+- 🎨 **Beautiful output**: Colorized help text and command output
+- ⚡ ****Shell** function generation**: Automatically generates optimized shell functions
+- 🔧 **Auto complete**: Built-in support for autocomplete for bash/zsh
 
 ## Installation
 
@@ -27,40 +27,46 @@ cargo install eashy
 
 ## Quick Start
 
-1. Create a KDL file defining your commands (e.g., `commands.kdl`):
+1. Create a KDL file defining your commands (or use the `default.kdl`):
 
 ```kdl
 ("Python venv management") \
 venv {
-    ("Create a new virtual environment")\
+    ("Create a new virtual environment") \
     init {
         python -m venv ".venv"
         source ".venv/bin/activate"
         echo "Activated virtual environment, version: $(python --version)"
     }
 
-    ("Activate the virtual environment")\
+    ("Activate the virtual environment") \
     activate {
         source ".venv/bin/activate" && \
         echo "Activated virtual environment, version: $(python --version)" || \
         echo "Failed to activate virtual environment. Make sure .venv exists."
     }
 
-    ("Deactivate the virtual environment")\
+    ("Deactivate the virtual environment") \
     deactivate {
+        deactivate && echo "Deactivated virtual environment"
+    }
+    ("Delete the virtual environment") \
+    delete {
         deactivate
-        echo "Deactivated virtual environment"
+        rm -rf ".venv" && \
+        echo "Removed virtual environment"
     }
 }
 ```
 
 2. Generate shell functions:
 
-Generate the shell script for all the function contains in default.kdl
+Generate the shell script for every functions contained in the kdl file
 
 ```bash
 eashy
 ```
+_Note: You can change the input/output files, try `eashy --help` for more info_
 
 3. Source the generated script:
 
@@ -68,8 +74,6 @@ eashy
 source ~/.eashy/eashy.sh
 ```
 Add this line to your ~/.bashrc or ~/.zshrc!
-
-(You can change the input/output files, try `eashy --help` for more info)
 
 4. Use your new commands with automatic help:
 
@@ -79,7 +83,17 @@ venv init --help      # Shows subcommand help
 venv init             # Creates and activates virtual environment
 ```
 
+What the help section looks like:
+
+![Help output example](assets/venv_help.png){height=auto style="max-width: 400px;"}
+
+And cherry on top, you get autocompletion with all your commands on bash/zsh:
+****
+![Completion output example](assets/venv_completion.png){height=auto style="max-width: 400px;"}
+
 ## KDL Syntax
+
+Here is a quick introduction, more examples in example.kdl
 
 ### Basic Command Structure
 
@@ -90,13 +104,33 @@ my_cmd {
 }
 ```
 
-### Command with positional and optional arguments
+Basically, each nodes childless are interpreted as shell line to be executed, and parents node are commands/subcommands
 
+### Command with positional and optional arguments
+Next to a command, you can ask for positional and optional arguments (flags)
 ```kdl
 new_sh_file filename shebang="#!/bin/sh" {
     "filename=${filename%.*}.sh"    // Make sure the name ends with .sh (Quotes for escaping '{' and '}' characters)
     echo $shebang > $filename       // Create the file and write the shebang
     chmod +x $filename              // Make the file executable
+}
+```
+
+### Variable argument count
+Some argument can accept more than one string
+
+You can prefix arguments with:
+- `*arg`: Zero or more arguments needed
+- `+arg`: One or more arguments needed
+- `?arg`: Zero or one argument needed
+
+For example, a command that iterate each source and copy to each destination.
+```kdl
+mycopy +src dest {
+    for s in $src; do
+        echo "copy $s to $dest"
+        cp "$s" "$dest"
+    done
 }
 ```
 
@@ -147,14 +181,6 @@ Example:
     echo "This will not run as the previous command succeeds"
 }
 ```
-
-## Generated Output
-
-Eashy generates optimized shell functions with:
-
-- **Automatic help parsing**: Recognizes `-h` and `--help` flags
-- **Colorized output**: Beautiful, inspired by `cargo` or `uv` help section
-- **Error handling**: Proper error messages for unknown subcommands
 
 ## Use Cases
 
@@ -238,13 +264,13 @@ git-flow {
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to open an issue or submit a pull request.
 
 ## License
 
 This project is licensed under the Apache-2.0 License - see the [LICENSE](LICENSE) file for details.
 
 ## Links
-
+- [Crates.io](https://crates.io/crates/eashy)
 - [Repository](https://github.com/jilchab/eashy)
 - [KDL Language](https://kdl.dev/) - Learn more about the KDL format
