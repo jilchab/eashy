@@ -395,7 +395,7 @@ fn generate_autocompletion(command: &Command) -> String {
     output.push_str("        *) ;;\n");
     output.push_str("    esac\n");
     output.push_str(&format!(
-        "    array+=(\"{:<width$}Show help information\" \"{:<width$}Show help information\")\n",
+        "    array+=(\"{:<width$} Show help information\" \"{:<width$} Show help information\")\n",
         "-h:", "--help:"
     ));
     output.push_str("    for elem in \"${array[@]}\"; do\n");

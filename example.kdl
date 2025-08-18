@@ -47,7 +47,7 @@ args {
         echo "Arg2: [$arg2]"
 
     }
-   ("At least 1 args, the last is always arg2") \
+    ("At least 1 args, the last is always arg2") \
     complex1 ("Zero or more")*arg1 ("Required flag")arg2{
         echo "Arg1: [$arg1]"
         echo "Arg2: [$arg2]"

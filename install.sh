@@ -111,7 +111,7 @@ install() {
 
     # Run it once
     "$BIN_DIR/$BINARY_NAME" --quiet
-    source "$DIR/eashy.sh"
+    . "$DIR/eashy.sh"
 
     echo ""
     echo "$BINARY_NAME v$version installed successfully"
