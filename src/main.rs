@@ -1,48 +1,28 @@
 use anyhow::Error;
-use clap::Parser;
 use kdl::KdlDocument;
 use std::fs;
-use std::path::PathBuf;
+use std::io::{self, Write};
 
+use crate::cli::Cli;
 use crate::parser::Command;
 
+mod cli;
 mod parser;
 mod shell_generator;
 
-const FOLDER_DIR: &str = ".eashy";
-
-#[derive(Parser)]
-#[command(name = "eashy")]
-#[command(about = "Generate shell scripts with autocompletion from KDL configuration")]
-#[command(version)]
-struct Cli {
-    #[arg(short, long, value_name = "FILE")]
-    file: Option<PathBuf>,
-    #[arg(short, long, value_name = "FILE")]
-    output: Option<PathBuf>,
-}
-
-fn get_default_paths() -> Result<(PathBuf, PathBuf), Error> {
-    let eashy_dir = dirs::home_dir()
-        .ok_or(Error::msg("Could not determine home directory"))?
-        .join(FOLDER_DIR);
-
-    let default_input = eashy_dir.join("default.kdl");
-    let default_output = eashy_dir.join("eashy.sh");
-
-    Ok((default_input, default_output))
-}
-
 fn main() -> Result<(), Error> {
     let cli = Cli::parse();
+    let input_file = cli.get_input_file()?;
+    let output_file = cli.get_output_file()?;
 
-    let (default_input, default_output) = get_default_paths()?;
-    let input_file = cli.file.unwrap_or(default_input);
-    let output_file = cli.output.unwrap_or(default_output);
-    if let Some(parent) = output_file.parent() {
-        std::fs::create_dir_all(parent)?;
+    // Create directory for output file if needed
+    if let Some(ref file) = output_file {
+        if let Some(parent) = file.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
     }
 
+    // Read and parse the KDL file
     let doc: KdlDocument = fs::read_to_string(&input_file)
         .map_err(|e| {
             Error::msg(format!(
@@ -68,20 +48,24 @@ fn main() -> Result<(), Error> {
 
     let output = shell_generator::generate_script(&commands);
 
-    // Write the output file
-    fs::write(&output_file, output).map_err(|e| {
-        Error::msg(format!(
-            "Failed to write output file '{}': {}",
-            output_file.display(),
-            e
-        ))
-    })?;
+    // Write output to stdout or file
+    if cli.is_stdout_output() {
+        print!("{}", output);
+        io::stdout()
+            .flush()
+            .map_err(|e| Error::msg(format!("Failed to flush stdout: {}", e)))?;
+    } else {
+        let file = output_file.unwrap();
+        fs::write(&file, output).map_err(|e| {
+            Error::msg(format!(
+                "Failed to write output file '{}': {}",
+                file.display(),
+                e
+            ))
+        })?;
 
-    // Success message with sourcing instructions
-    println!("Successfully generated at: {}", output_file.display());
-    println!("To use the generated commands, you need to source this file:");
-    println!("   source {}", output_file.display());
-    println!("To make it permanent, add this line to your .bashrc/.zshrc");
+        cli.print_success_message(&file);
+    }
 
     Ok(())
 }
