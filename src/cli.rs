@@ -1,19 +1,18 @@
 use anyhow::Error;
-use clap::builder::styling::{AnsiColor, Effects, Style};
-use clap::builder::Styles;
 use clap::Parser;
+use clap::builder::Styles;
+use clap::builder::styling::{AnsiColor, Effects, Style};
 use std::path::{Path, PathBuf};
 
 const FOLDER_DIR: &str = ".eashy";
 
 /// Expand ~ in paths to the home directory
 fn expand_tilde(path: PathBuf) -> PathBuf {
-    if let Some(path_str) = path.to_str() {
-        if path_str.starts_with("~/") {
-            if let Some(home) = dirs::home_dir() {
-                return home.join(&path_str[2..]);
-            }
-        }
+    if let Some(path_str) = path.to_str()
+        && let Some(stripped) = path_str.strip_prefix("~/")
+        && let Some(home) = dirs::home_dir()
+    {
+        return home.join(stripped);
     }
     path
 }
@@ -42,7 +41,12 @@ const CARGO_STYLING: Styles = Styles::styled()
 #[command(styles = CARGO_STYLING)]
 pub struct Cli {
     /// KDL file to parse
-    #[arg(short, long, value_name = "FILE", default_value = "~/.eashy/default.kdl")]
+    #[arg(
+        short,
+        long,
+        value_name = "FILE",
+        default_value = "~/.eashy/default.kdl"
+    )]
     pub file: Option<PathBuf>,
 
     /// Output shell script file (use "-" for stdout)
@@ -69,7 +73,7 @@ impl Cli {
                 .join(FOLDER_DIR)
                 .join("default.kdl")
         });
-        
+
         // Expand ~ if present
         Ok(expand_tilde(path))
     }
@@ -84,7 +88,8 @@ impl Cli {
         if self.is_stdout_output() {
             Ok(None)
         } else {
-            let path = self.output
+            let path = self
+                .output
                 .as_ref()
                 .map(|s| expand_tilde(PathBuf::from(s)))
                 .unwrap_or_else(|| {
@@ -94,7 +99,7 @@ impl Cli {
                         .join(FOLDER_DIR)
                         .join("eashy.sh")
                 });
-            
+
             Ok(Some(path))
         }
     }

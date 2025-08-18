@@ -75,28 +75,13 @@ download_and_install() {
     mkdir -p "$BIN_DIR"
     cp "$binary_path" "$BIN_DIR/$BINARY_NAME"
 
-    # Copy default.kdl if it exists in the archive
-    if [ -f "$default_kdl_path" ]; then
+    # Copy default.kdl from the archive if not already present
+    if [ -f "$default_kdl_path" ] && [ ! -f "$DIR/default.kdl" ]; then
         cp "$default_kdl_path" "$DIR/default.kdl"
-    else
-        echo "⚠️  default.kdl not found in archive, skipping..."
     fi
 
     chmod +x "$BIN_DIR/$BINARY_NAME"
     rm -rf "$tmp_dir"
-}
-
-check_existing_installation() {
-    if command -v "$BINARY_NAME" > /dev/null 2>&1; then
-        existing_version=$("$BINARY_NAME" --version 2>/dev/null | sed 's/.* //' || echo "unknown")
-        echo "⚠️  $BINARY_NAME is already installed (version: $existing_version)"
-        printf "Do you want to continue and overwrite? [y/N]: "
-        read -r response
-        case "$response" in
-            [yY]|[yY][eE][sS]) echo "Proceeding with installation..." ;;
-            *) echo "Installation cancelled."; exit 0 ;;
-        esac
-    fi
 }
 
 add_to_path() {
@@ -118,8 +103,6 @@ add_to_path() {
 
 install() {
     echo "Installing $BINARY_NAME..."
-
-    check_existing_installation
 
     target="$(detect_platform)"
     version="$(get_latest_version)"

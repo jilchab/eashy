@@ -16,10 +16,10 @@ fn main() -> Result<(), Error> {
     let output_file = cli.get_output_file()?;
 
     // Create directory for output file if needed
-    if let Some(ref file) = output_file {
-        if let Some(parent) = file.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
+    if let Some(ref file) = output_file
+        && let Some(parent) = file.parent()
+    {
+        std::fs::create_dir_all(parent)?;
     }
 
     // Read and parse the KDL file

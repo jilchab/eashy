@@ -15,6 +15,12 @@ Eashy is a command-line tool that generates shell functions with subcommands and
 
 ## Installation
 
+For Linux or MacOS:
+```bash
+curl -fsSL https://github.com/jilchab/eashy/raw/main/install.sh | sh
+```
+
+Or using Cargo:
 ```bash
 cargo install eashy
 ```
