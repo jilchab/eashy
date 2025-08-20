@@ -109,11 +109,12 @@ venv init             # Creates and activates virtual environment
 
 What the help section looks like:
 
-![Help output example](assets/venv_help.png){height=auto style="max-width: 400px;"}
+<img src="assets/venv_help.png" width="400" title="Help output example">
 
 And cherry on top, you get autocompletion with all your commands on bash/zsh:
 
-![Completion output example](assets/venv_completion.png){height=auto style="max-width: 400px;"}
+<img src="assets/venv_completion.png" width="400" title="Completion output example">
+
 Every time you update your kdl file, dont forget to regenerated the shell file with the eashy command!
 ## KDL Syntax
 
