@@ -7,11 +7,35 @@ Eashy is a command-line tool that generates shell functions with subcommands and
 ## Features
 
 - 🚀 **Simple KDL syntax**: Define commands using the human-friendly KDL format
-- 📖 **Automatic help generation**: Built-in `--help` support for all commands and subcommands
 - 👑 **Nested subcommands**: Support for multiple levels of command hierarchies
+- 📖 **Automatic help generation**: Built-in `--help` support for all commands and subcommands
 - 🎨 **Beautiful output**: Colorized help text and command output
-- ⚡ ****Shell** function generation**: Automatically generates optimized shell functions
+- ⚡ **Shell function generation**: Automatically generates optimized shell functions
 - 🔧 **Auto complete**: Built-in support for autocomplete for bash/zsh
+## Table of Contents
+
+
+- [Eashy](#eashy)
+  - [Features](#features)
+  - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+  - [KDL Syntax](#kdl-syntax)
+    - [Basic Command Structure](#basic-command-structure)
+    - [Arguments](#arguments)
+      - [Optional values quirks](#optional-values-quirks)
+      - [Variable argument count](#variable-argument-count)
+    - [Nested Subcommands with description](#nested-subcommands-with-description)
+    - [Command Prefixes](#command-prefixes)
+  - [Use Cases](#use-cases)
+    - [Development Workflows](#development-workflows)
+    - [Environment Management](#environment-management)
+    - [Git Workflows](#git-workflows)
+  - [Why Eashy?](#why-eashy)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Links](#links)
+
 
 ## Installation
 
@@ -88,9 +112,9 @@ What the help section looks like:
 ![Help output example](assets/venv_help.png){height=auto style="max-width: 400px;"}
 
 And cherry on top, you get autocompletion with all your commands on bash/zsh:
-****
-![Completion output example](assets/venv_completion.png){height=auto style="max-width: 400px;"}
 
+![Completion output example](assets/venv_completion.png){height=auto style="max-width: 400px;"}
+Every time you update your kdl file, dont forget to regenerated the shell file with the eashy command!
 ## KDL Syntax
 
 Here is a quick introduction, more examples in example.kdl
@@ -104,10 +128,14 @@ my_cmd {
 }
 ```
 
-Basically, each nodes childless are interpreted as shell line to be executed, and parents node are commands/subcommands
+Basically, each node without children are interpreted as s shell line to be executed, and parents node are commands/subcommands
 
-### Command with positional and optional arguments
-Next to a command, you can ask for positional and optional arguments (flags)
+### Arguments
+Next to a command, you can ask for positional and optional arguments.
+- **Positional arguments**: Default KDL argument, the order is important.
+- **Optional arguments**: Also called options or flags, they can be used using KDL properties. The indentifier is now the argument name, and its value the default value.
+
+Arguments can be used in shell commands using **$**
 ```kdl
 new_sh_file filename shebang="#!/bin/sh" {
     "filename=${filename%.*}.sh"    // Make sure the name ends with .sh (Quotes for escaping '{' and '}' characters)
@@ -116,23 +144,48 @@ new_sh_file filename shebang="#!/bin/sh" {
 }
 ```
 
-### Variable argument count
-Some argument can accept more than one string
+#### Optional values quirks
+
+- They starts with `--` or `-` if its name is one character
+- Optional flags require values, except boolean flags
+- Even when not set, they can still be used with their default value
+- Default values can be a string, a number or #true/#false for boolean flags.
+- Description is put after the equal sign (See the [ "Description"](#nested-subcommands-with-description) chapter)
+
+ Example:
+  ```kdl
+  create_file name="file.txt" v=#false verbose=#false {
+    touch $name
+    if $v || $verbose; then
+        echo "New file $name created"
+    fi
+  }
+  ```
+
+```sh
+$ create_file --name hello.rs -v
+New file hello.rs created
+```
+
+
+#### Variable argument count
+Some arguments can accept more than one string
 
 You can prefix arguments with:
 - `*arg`: Zero or more arguments needed
 - `+arg`: One or more arguments needed
 - `?arg`: Zero or one argument needed
 
-For example, a command that iterate each source and copy to each destination.
+For example, a command that iterate each source and copy to a destination with a message.
 ```kdl
 mycopy +src dest {
     for s in $src; do
         echo "copy $s to $dest"
-        cp "$s" "$dest"
+        cp $s $dest
     done
 }
 ```
+In this example, the for loop syntax is similar in bourne-like shell, as a node without children can be terminated by a semicolon
 
 ### Nested Subcommands with description
 
@@ -193,17 +246,17 @@ Perfect for creating project-specific command shortcuts:
 dev {
     ("Start development server") \
     start {
-        npm "run" "dev"
+        npm run dev
     }
 
     ("Run tests") \
     test {
-        npm "run" "test"
+        npm run test
     }
 
     ("Build for production") \
     build {
-        npm "run" "build"
+        npm run build
     }
 }
 ```
@@ -214,20 +267,20 @@ Simplify environment setup and management:
 
 ```kdl
 ("Docker operations") \
-docker {
+dck {
     ("Start all services") \
     up {
-        docker-compose "up" "-d"
+        docker-compose up -d
     }
 
     ("Stop all services") \
     down {
-        docker-compose "down"
+        docker-compose down
     }
 
     ("View logs") \
     logs {
-        docker-compose "logs" "-f"
+        docker-compose logs -f
     }
 }
 ```
@@ -240,16 +293,16 @@ Create custom git command combinations:
 ("Git workflow shortcuts") \
 git-flow {
     ("Quick commit and push") \
-    qcp {
-        git "add" "."
-        git "commit" "-m" "Quick commit"
-        git "push"
+    qcp m=("Commit message")"Quick commit"{
+        git add "."
+        git commit -m $m
+        git push
     }
 
     ("Create and switch to new branch") \
-    new-branch {
-        git "checkout" "-b"
-        git "push" "-u" "origin"
+    new-branch name {
+        git checkout -b $name
+        git push -u origin
     }
 }
 ```
@@ -271,6 +324,6 @@ Contributions are welcome! Please feel free to open an issue or submit a pull re
 This project is licensed under the Apache-2.0 License - see the [LICENSE](LICENSE) file for details.
 
 ## Links
+- [KDL Language](https://kdl.dev/) - Learn more about the KDL format
 - [Crates.io](https://crates.io/crates/eashy)
 - [Repository](https://github.com/jilchab/eashy)
-- [KDL Language](https://kdl.dev/) - Learn more about the KDL format
