@@ -54,7 +54,7 @@ fn generate_function(command: &Command) -> String {
 }
 
 fn generate_subcommand_func_body(output: &mut String, command: &Command, subcommands: &[Command]) {
-    output.push_str("    local subcmd=\"$1\"\n");
+    output.push_str("    subcmd=\"$1\"\n");
     output.push_str("    if [ $# -gt 0 ]; then shift; fi\n");
     output.push_str("    case \"$subcmd\" in\n");
 
@@ -389,13 +389,13 @@ fn generate_autocompletion(command: &Command) -> String {
     output.push_str(&format!("_completions_{}_() {{\n", command.name));
     output.push_str("    local -a array\n");
     output.push_str("    local current=$1; shift\n");
-    output.push_str("    local previous=($@)\n");
+    output.push_str("    eval 'local previous=($@)'\n");
     output.push_str("    case \"${previous[@]}\" in\n");
     generate_autocompletion_case(&mut output, command);
     output.push_str("        *) ;;\n");
     output.push_str("    esac\n");
     output.push_str(&format!(
-        "    array+=(\"{:<width$} Show help information\" \"{:<width$} Show help information\")\n",
+        "    eval 'array+=(\"{:<width$} Show help information\" \"{:<width$} Show help information\")'\n",
         "-h:", "--help:"
     ));
     output.push_str("    for elem in \"${array[@]}\"; do\n");
@@ -437,14 +437,14 @@ fn generate_autocompletion_case(output: &mut String, command: &Command) {
     }
 
     output.push_str(&format!(
-        "        \"{}\") array=(\n",
+        "        \"{}\") eval 'array=(\n",
         command.get_command_path_string()
     ));
     let width = command.get_max_width() + 2;
     for (name, desc) in comp_list {
         output.push_str(&format!("            \"{name:width$} {desc}\"\n"))
     }
-    output.push_str("            );;\n");
+    output.push_str("            )';;\n");
 
     if let Children::Subcmds(ref subcommands) = command.children {
         for subcommand in subcommands {

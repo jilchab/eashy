@@ -96,8 +96,9 @@ add_to_path() {
     echo "To use $BINARY_NAME, add it to your PATH:"
     echo "   export PATH=\"$BIN_DIR:\$PATH\""
     echo ""
-    echo "Or add this line to your shell configuration ($shell_rc):"
+    echo "Or run:"
     echo "   echo 'export PATH=\"$BIN_DIR:\$PATH\"' >> $shell_rc"
+    echo "To add it to your shell configuration ($shell_rc):"
     echo ""
 }
 
