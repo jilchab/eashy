@@ -1,6 +1,6 @@
 [package]
 name = "eashy"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
 description = "No more hassle writing shell functions! Easy subcommands and help documentation"
 license = "Apache-2.0"
